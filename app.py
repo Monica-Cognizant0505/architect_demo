@@ -5,6 +5,7 @@ from context_engineering import ContextEngineer
 from vector_retrieval import VectorDB
 from vision_execution import VisionAgent
 import json
+from PIL import Image
 
 # -- Styling for attractive UI and full-width bottom result box --
 st.markdown(
@@ -113,10 +114,17 @@ with col2:
         except Exception as e:
             st.warning(f"Prompt construction failed: {e}")
 
-# Step 4: vision analysis (replace from here)
+# Step 4: vision analysis
 st.write("Step 4 (Vision): Analyzing image geometry...")
 st.markdown('<div class="input-image">', unsafe_allow_html=True)
-st.image(image_bytes, caption="Input Image", width=320)
+
+# FIX: Convert bytes to PIL Image before displaying
+try:
+    image_source = Image.open(BytesIO(image_bytes))
+    st.image(image_source, caption="Input Image", width=320)
+except Exception as e:
+    st.error(f"Error displaying image: {e}")
+
 st.markdown('</div>', unsafe_allow_html=True)
 
 # Reserve a placeholder for the result box and render it empty while analysis runs
