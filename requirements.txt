@@ -1,0 +1,5 @@
+openai>=1.55.0
+streamlit
+Pillow
+numpy
+pandas
