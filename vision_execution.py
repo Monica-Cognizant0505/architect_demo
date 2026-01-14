@@ -2,6 +2,7 @@
 import base64
 from openai import AzureOpenAI
 import streamlit as st 
+import os
 
 class VisionAgent:
     def __init__(self):
