@@ -1,7 +1,7 @@
 # vision_execution.py
 import base64
 from openai import AzureOpenAI
-import config  # Importing credentials from config.py
+import streamlit as st 
 
 class VisionAgent:
     def __init__(self):
