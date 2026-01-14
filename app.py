@@ -114,16 +114,19 @@ with col2:
         except Exception as e:
             st.warning(f"Prompt construction failed: {e}")
 
-# Step 4: vision analysis
-st.write("Step 4 (Vision): Analyzing image geometry...")
-st.markdown('<div class="input-image">', unsafe_allow_html=True)
-
-# FIX: Convert bytes to PIL Image before displaying
-try:
-    image_source = Image.open(BytesIO(image_bytes))
-    st.image(image_source, caption="Input Image", width=320)
-except Exception as e:
-    st.error(f"Error displaying image: {e}")
+    # Step 4: vision analysis
+    if image_bytes:  # <--- CRITICAL CHECK: Only run if image exists
+        st.write("Step 4 (Vision): Analyzing image geometry...")
+        st.markdown('<div class="input-image">', unsafe_allow_html=True)
+        
+        try:
+            # Convert bytes to PIL Image to avoid Python 3.13 errors
+            image_source = Image.open(BytesIO(image_bytes))
+            st.image(image_source, caption="Input Image", width=320)
+        except Exception as e:
+            st.error(f"Error displaying image: {e}")
+            
+        st.markdown('</div>', unsafe_allow_html=True)
 
 st.markdown('</div>', unsafe_allow_html=True)
 
