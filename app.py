@@ -86,6 +86,7 @@ with col2:
     st.markdown('<div class="card">', unsafe_allow_html=True)
     st.markdown("### 2. Pipeline Status", unsafe_allow_html=True)
 
+    # Everything below depends on the button being clicked
     if run_btn:
         if not image_bytes:
             st.error("Please provide a valid image input first.")
@@ -94,7 +95,7 @@ with col2:
         # Initialize modules
         vdb = VectorDB()
         ce = ContextEngineer()
-        va = VisionAgent()
+        va = VisionAgent()  # <--- 'va' is created here
 
         # Step 2: vector retrieval
         retrieved_data = None
@@ -114,13 +115,14 @@ with col2:
         except Exception as e:
             st.warning(f"Prompt construction failed: {e}")
 
-    # Step 4: vision analysis
-    if image_bytes:  # <--- CRITICAL CHECK: Only run if image exists
+        # Step 4: vision analysis
+        # ALL of this must be indented to be inside 'if run_btn:'
         st.write("Step 4 (Vision): Analyzing image geometry...")
         st.markdown('<div class="input-image">', unsafe_allow_html=True)
         
+        # Display Image safely
         try:
-            # Convert bytes to PIL Image to avoid Python 3.13 errors
+            # Requires: from PIL import Image (at top of file)
             image_source = Image.open(BytesIO(image_bytes))
             st.image(image_source, caption="Input Image", width=320)
         except Exception as e:
@@ -128,41 +130,37 @@ with col2:
             
         st.markdown('</div>', unsafe_allow_html=True)
 
-st.markdown('</div>', unsafe_allow_html=True)
+        # Result Placeholder
+        result_placeholder = st.empty()
+        empty_html = '''
+            <div class="result-box" role="region" aria-label="Final Result" style="position:relative; max-width:820px; margin-top:12px; height:120px; max-height:320px;">
+                <div class="result-title">📋 Final Result</div>
+                <div class="result-text"></div>
+            </div>
+        '''
+        result_placeholder.markdown(empty_html, unsafe_allow_html=True)
 
-# Reserve a placeholder for the result box and render it empty while analysis runs
-result_placeholder = st.empty()
-empty_html = '''
-    <div class="result-box" role="region" aria-label="Final Result" style="position:relative; max-width:820px; margin-top:12px; height:120px; max-height:320px;">
-        <div class="result-title">📋 Final Result</div>
-        <div class="result-text"></div>
-    </div>
-'''
-result_placeholder.markdown(empty_html, unsafe_allow_html=True)
+        # Run Analysis
+        result = None
+        with st.spinner("Running vision analysis..."):
+            try:
+                # 'va' is now defined because we are inside the if block
+                result = va.analyze(image_bytes, prompt)
+            except Exception as e:
+                result = f"Vision analysis failed: {e}"
 
-# Run analysis with a spinner and update the placeholder afterward
-result = None
-with st.spinner("Running vision analysis..."):
-    try:
-        result = va.analyze(image_bytes, prompt)
-    except Exception as e:
-        # Only show the error after analysis attempt; during loading the box stays empty
-        result = f"Vision analysis failed: {e}"
+        # Display Result
+        if isinstance(result, (dict, list)):
+            content_str = json.dumps(result, indent=2)
+        else:
+            content_str = str(result)
 
-# Convert result to plain text (no JSON widget)
-if isinstance(result, (dict, list)):
-    content_str = json.dumps(result, indent=2)
-else:
-    content_str = str(result)
+        safe_text = content_str.replace("<", "&lt;").replace(">", "&gt;")
 
-# Escape HTML to avoid injection, keep newlines for readability
-safe_text = content_str.replace("<", "&lt;").replace(">", "&gt;")
-
-# Final medium-sized inline rectangular result box (replace the empty one)
-final_html = f'''
-    <div class="result-box" role="region" aria-label="Final Result" style="position:relative; max-width:820px; margin-top:12px; height:auto; max-height:320px;">
-        <div class="result-title">📋 Final Result</div>
-        <div class="result-text">{safe_text}</div>
-    </div>
-'''
-result_placeholder.markdown(final_html, unsafe_allow_html=True)
+        final_html = f'''
+            <div class="result-box" role="region" aria-label="Final Result" style="position:relative; max-width:820px; margin-top:12px; height:auto; max-height:320px;">
+                <div class="result-title">📋 Final Result</div>
+                <div class="result-text">{safe_text}</div>
+            </div>
+        '''
+        result_placeholder.markdown(final_html, unsafe_allow_html=True)
